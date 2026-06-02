@@ -47,14 +47,6 @@ export default function LoginPage() {
             Sistem kasir modern untuk<br />operasional Z Coffee.
           </p>
         </div>
-
-        <div className="relative z-10 flex gap-4">
-          {['Admin', 'Kasir', 'Owner'].map((role) => (
-            <div key={role} className="px-3 py-1.5 rounded-lg bg-coffee-800/60 border border-coffee-700/50">
-              <span className="text-xs text-coffee-300 font-medium">{role}</span>
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* Right — form */}
@@ -109,13 +101,7 @@ export default function LoginPage() {
               {isLoading ? <><Loader2 className="h-4 w-4 animate-spin" /> Memproses...</> : 'Masuk'}
             </Button>
           </form>
-
-          <div className="mt-8 p-4 rounded-xl bg-muted text-xs text-muted-foreground space-y-1">
-            <p className="font-semibold text-foreground mb-2">Akun Demo:</p>
-            <p>admin@zcoffee.id — <span className="font-mono">password123</span></p>
-            <p>kasir@zcoffee.id — <span className="font-mono">password123</span></p>
-            <p>owner@zcoffee.id — <span className="font-mono">password123</span></p>
-          </div>
+          
         </div>
       </div>
     </div>
