@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  kasir
+  owner
+}
+
+enum QueueStatus {
+  waiting
+  processing
+  done
+}
+
+enum StockLogType {
+  in
+  out
+  adjustment
+}
+
+enum PaymentMethod {
+  cash
+  qris
+  transfer
+}
+
+model User {
+  id           String        @id @default(cuid())
+  name         String
+  email        String        @unique
+  password     String
+  role         Role          @default(kasir)
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  transactions Transaction[]
+
+  @@map("users")
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  createdAt DateTime  @default(now()) @map("created_at")
+  products  Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id              String            @id @default(cuid())
+  categoryId      String            @map("category_id")
+  category        Category          @relation(fields: [categoryId], references: [id])
+  name            String
+  image           String?
+  price           Int
+  hpp             Int
+  stock           Int               @default(0)
+  isAvailable     Boolean           @default(true) @map("is_available")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+  transactionItems TransactionItem[]
+  stockLogs       StockLog[]
+
+  @@map("products")
+}
+
+model Transaction {
+  id              String            @id @default(cuid())
+  invoiceNumber   String            @unique @map("invoice_number")
+  total           Int
+  totalProfit     Int               @map("total_profit")
+  paymentMethod   PaymentMethod     @map("payment_method")
+  cashAmount      Int?              @map("cash_amount")
+  changeAmount    Int?              @map("change_amount")
+  createdById     String            @map("created_by")
+  createdBy       User              @relation(fields: [createdById], references: [id])
+  createdAt       DateTime          @default(now()) @map("created_at")
+  items           TransactionItem[]
+  queue           Queue?
+
+  @@map("transactions")
+}
+
+model TransactionItem {
+  id            String      @id @default(cuid())
+  transactionId String      @map("transaction_id")
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  productId     String      @map("product_id")
+  product       Product     @relation(fields: [productId], references: [id])
+  qty           Int
+  price         Int
+  hpp           Int
+  subtotal      Int
+
+  @@map("transaction_items")
+}
+
+model Queue {
+  id            String      @id @default(cuid())
+  queueNumber   Int         @map("queue_number")
+  status        QueueStatus @default(waiting)
+  transactionId String      @unique @map("transaction_id")
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  @@map("queues")
+}
+
+model StockLog {
+  id        String       @id @default(cuid())
+  productId String       @map("product_id")
+  product   Product      @relation(fields: [productId], references: [id])
+  type      StockLogType
+  qty       Int
+  note      String?
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  @@map("stock_logs")
+}
