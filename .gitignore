@@ -4,6 +4,7 @@
 /backend/.vscode
 /backend/.claude
 /backend/uploads/*.jpg
+/backend/dist
 
 /frontend/node_modules
 /frontend/.env

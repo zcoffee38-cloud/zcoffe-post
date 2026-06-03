@@ -16,7 +16,11 @@ export const setQueueSocketIO = (socketIO: Server) => {
 const getAll = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { status, date } = req.query as Record<string, string>;
 
-  const where: Record<string, unknown> = {};
+  const where: Record<string, unknown> = {
+    transaction: {
+      isDeleted: false
+    }
+  };
   if (status) where.status = status;
   if (date) {
     const d = new Date(date);

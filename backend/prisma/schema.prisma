@@ -83,6 +83,7 @@ model Transaction {
   createdById     String            @map("created_by")
   createdBy       User              @relation(fields: [createdById], references: [id])
   createdAt       DateTime          @default(now()) @map("created_at")
+  isDeleted       Boolean           @default(false) @map("is_deleted")
   items           TransactionItem[]
   queue           Queue?
 

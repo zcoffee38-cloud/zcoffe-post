@@ -13,14 +13,14 @@ const getDashboard = asyncHandler(async (_req: AuthRequest, res: Response) => {
 
   const [todaySales, activeQueues, topProducts] = await Promise.all([
     prisma.transaction.aggregate({
-      where: { createdAt: { gte: today, lt: tomorrow } },
+      where: { createdAt: { gte: today, lt: tomorrow }, isDeleted: false },
       _sum: { total: true, totalProfit: true },
       _count: { id: true },
     }),
-    prisma.queue.count({ where: { status: { in: ['waiting', 'processing'] }, createdAt: { gte: today, lt: tomorrow } } }),
+    prisma.queue.count({ where: { status: { in: ['waiting', 'processing'] }, createdAt: { gte: today, lt: tomorrow }, transaction: { isDeleted: false } } }),
     prisma.transactionItem.groupBy({
       by: ['productId'],
-      where: { transaction: { createdAt: { gte: today, lt: tomorrow } } },
+      where: { transaction: { createdAt: { gte: today, lt: tomorrow }, isDeleted: false } },
       _sum: { qty: true },
       orderBy: { _sum: { qty: 'desc' } },
       take: 5,
@@ -51,7 +51,7 @@ const getSalesReport = asyncHandler(async (req: AuthRequest, res: Response) => {
   end.setHours(23, 59, 59, 999);
 
   const transactions = await prisma.transaction.findMany({
-    where: { createdAt: { gte: start, lte: end } },
+    where: { createdAt: { gte: start, lte: end }, isDeleted: false },
     include: { items: { include: { product: { select: { name: true } } } }, createdBy: { select: { name: true } } },
     orderBy: { createdAt: 'desc' },
   });
@@ -73,7 +73,7 @@ const getTopProducts = asyncHandler(async (req: AuthRequest, res: Response) => {
 
   const topProducts = await prisma.transactionItem.groupBy({
     by: ['productId'],
-    where: { transaction: { createdAt: { gte: start, lte: end } } },
+    where: { transaction: { createdAt: { gte: start, lte: end }, isDeleted: false } },
     _sum: { qty: true, subtotal: true },
     orderBy: { _sum: { qty: 'desc' } },
     take: Number(limit),

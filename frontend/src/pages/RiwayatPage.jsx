@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Search, Calendar, Eye, Printer, X, ChevronLeft, ChevronRight, History, CreditCard, QrCode, Banknote } from 'lucide-react';
+import { Search, Calendar, Eye, Printer, X, ChevronLeft, ChevronRight, History, CreditCard, QrCode, Banknote, Trash2, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
@@ -7,6 +7,8 @@ import { Badge } from '../components/ui/badge';
 import { Skeleton } from '../components/ui/skeleton';
 import { formatCurrency, formatDateTime } from '../lib/utils';
 import useSettingsStore from '../store/settingsStore';
+import useAuthStore from '../store/authStore';
+import { useToast } from '../components/ui/toaster';
 import api from '../api';
 
 const paymentLabels = { cash: 'Tunai', qris: 'QRIS', transfer: 'Transfer' };
@@ -72,8 +74,29 @@ export default function RiwayatPage() {
 
   // Selected Transaction for Modal
   const [selectedTx, setSelectedTx] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const { settings, fetchSettings } = useSettingsStore();
+  const { user } = useAuthStore();
+  const { toast } = useToast();
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    try {
+      await api.delete(`/transactions/${deleteTarget.id}`);
+      toast({ title: 'Transaksi berhasil dihapus', variant: 'success' });
+      setDeleteTarget(null);
+      setSelectedTx(null);
+      fetchTransactions();
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Terjadi kesalahan sistem';
+      toast({ title: 'Gagal menghapus transaksi', description: msg, variant: 'destructive' });
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   const fetchTransactions = useCallback(async () => {
     setLoading(true);
@@ -222,15 +245,28 @@ export default function RiwayatPage() {
                         {formatCurrency(t.total)}
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSelectedTx(t)}
-                          className="h-8 gap-1.5"
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                          Detail
-                        </Button>
+                        <div className="flex items-center justify-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSelectedTx(t)}
+                            className="h-8 gap-1.5"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                            Detail
+                          </Button>
+                          {(user?.role === 'admin' || user?.role === 'owner') && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setDeleteTarget(t)}
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              title="Hapus Transaksi"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -360,6 +396,16 @@ export default function RiwayatPage() {
             </div>
 
             <div className="p-4 border-t bg-muted/10 flex gap-2">
+              {(user?.role === 'admin' || user?.role === 'owner') && (
+                <Button
+                  variant="outline"
+                  onClick={() => setDeleteTarget(selectedTx)}
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30 h-10 px-3"
+                  title="Hapus Transaksi"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
               <Button variant="outline" className="flex-1" onClick={() => setSelectedTx(null)}>
                 Tutup
               </Button>
@@ -378,6 +424,40 @@ export default function RiwayatPage() {
           result={{ transaction: selectedTx, queue: selectedTx.queue }}
           settings={settings}
         />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-card rounded-2xl border p-6 max-w-sm w-full animate-fade-in shadow-2xl">
+            <h3 className="font-bold text-lg mb-1">Hapus Riwayat Transaksi?</h3>
+            <p className="text-muted-foreground text-sm mb-4">
+              Transaksi <span className="font-semibold text-foreground">"{deleteTarget.invoiceNumber}"</span> akan disembunyikan dari riwayat, laporan, dan antrean aktif. Data tetap tersimpan aman di database.
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleteLoading}
+              >
+                Batal
+              </Button>
+              <Button
+                variant="destructive"
+                className="flex-1"
+                onClick={handleDelete}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Menghapus...</>
+                ) : (
+                  'Hapus'
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -4,7 +4,7 @@ import prisma from '../../config/database';
 import { sendSuccess, sendError, getPagination } from '../../utils/response';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { AuthRequest } from '../../types';
-import { authenticate } from '../../middlewares/auth';
+import { authenticate, authorize } from '../../middlewares/auth';
 import { generateInvoiceNumber } from '../../utils/invoice';
 
 let io: Server;
@@ -106,7 +106,7 @@ const getAll = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { page = '1', limit = '10', date, search = '' } = req.query as Record<string, string>;
   const { skip, page: p, limit: l } = getPagination(page, limit);
 
-  const where: any = {};
+  const where: any = { isDeleted: false };
   if (date) {
     const d = new Date(date);
     const nextDay = new Date(d);
@@ -142,10 +142,24 @@ const getById = asyncHandler(async (req: AuthRequest, res: Response) => {
   return sendSuccess(res, 'Transaction retrieved', transaction);
 });
 
+const softDelete = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const transaction = await prisma.transaction.findUnique({ where: { id } });
+  if (!transaction) return sendError(res, 'Transaction not found', 404);
+
+  await prisma.transaction.update({
+    where: { id },
+    data: { isDeleted: true },
+  });
+
+  return sendSuccess(res, 'Transaction deleted successfully');
+});
+
 const router = Router();
 router.use(authenticate);
 router.get('/', getAll);
 router.get('/:id', getById);
 router.post('/', createTransaction);
+router.delete('/:id', authorize('admin', 'owner'), softDelete);
 
 export default router;
