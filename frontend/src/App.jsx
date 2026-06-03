@@ -12,6 +12,7 @@ import LaporanPage from '@/pages/LaporanPage';
 import PenggunaPage from '@/pages/PenggunaPage';
 import PengaturanPage from '@/pages/PengaturanPage';
 import RiwayatPage from '@/pages/RiwayatPage';
+import KategoriPage from '@/pages/KategoriPage';
 
 export default function App() {
   return (
@@ -64,6 +65,11 @@ export default function App() {
         <Route path="/riwayat" element={
           <ProtectedRoute roles={['admin', 'kasir', 'owner']}>
             <RiwayatPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/kategori" element={
+          <ProtectedRoute roles={['admin']}>
+            <KategoriPage />
           </ProtectedRoute>
         } />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
