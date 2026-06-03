@@ -10,6 +10,8 @@ import ProdukPage from '@/pages/ProdukPage';
 import StokPage from '@/pages/StokPage';
 import LaporanPage from '@/pages/LaporanPage';
 import PenggunaPage from '@/pages/PenggunaPage';
+import PengaturanPage from '@/pages/PengaturanPage';
+import RiwayatPage from '@/pages/RiwayatPage';
 
 export default function App() {
   return (
@@ -52,6 +54,16 @@ export default function App() {
         <Route path="/pengguna" element={
           <ProtectedRoute roles={['admin']}>
             <PenggunaPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/pengaturan" element={
+          <ProtectedRoute roles={['admin']}>
+            <PengaturanPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/riwayat" element={
+          <ProtectedRoute roles={['admin', 'kasir', 'owner']}>
+            <RiwayatPage />
           </ProtectedRoute>
         } />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

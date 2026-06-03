@@ -8,6 +8,7 @@ import { Skeleton } from '../components/ui/skeleton';
 import { formatCurrency, getImageUrl, cn } from '../lib/utils';
 import { useToast } from '../components/ui/toaster';
 import useCartStore from '../store/cartStore';
+import useSettingsStore from '../store/settingsStore';
 import api from '../api';
 
 const PAYMENT_METHODS = [
@@ -175,6 +176,8 @@ function PaymentModal({ total, onClose, onSuccess }) {
 }
 
 function ReceiptPrintArea({ result }) {
+  const settings = useSettingsStore(s => s.settings);
+
   if (!result) return null;
 
   const { transaction, queue } = result;
@@ -184,8 +187,9 @@ function ReceiptPrintArea({ result }) {
     <div className="receipt-print-area" aria-hidden="true">
       <div className="receipt">
         <div className="receipt-header">
-          <h1>Z Coffee</h1>
-          <p>Point of Sale</p>
+          <h1>{settings?.shop_name || 'Z Coffee'}</h1>
+          {settings?.shop_phone && <p>Telp: {settings.shop_phone}</p>}
+          {settings?.shop_address && <p style={{ whiteSpace: 'pre-wrap' }}>{settings.shop_address}</p>}
         </div>
         <div className="receipt-meta">
           <div><span>Invoice</span><strong>{transaction.invoiceNumber}</strong></div>
@@ -215,7 +219,7 @@ function ReceiptPrintArea({ result }) {
             </>
           )}
         </div>
-        <p className="receipt-footer">Terima kasih</p>
+        <p className="receipt-footer">{settings?.receipt_footer || 'Terima kasih'}</p>
       </div>
     </div>
   );
@@ -274,9 +278,12 @@ export default function KasirPage() {
     finally { setLoading(false); }
   }, [search, activeCategory]);
 
+  const fetchSettings = useSettingsStore(s => s.fetchSettings);
+
   useEffect(() => {
     api.get('/categories').then(r => setCategories(r.data.data)).catch(console.error);
-  }, []);
+    fetchSettings();
+  }, [fetchSettings]);
 
   useEffect(() => {
     const t = setTimeout(fetchProducts, 300);

@@ -7,6 +7,7 @@ import transactionsRoutes from '../modules/transactions/transactions.routes';
 import queuesRoutes from '../modules/queues/queues.routes';
 import stockRoutes from '../modules/stock/stock.routes';
 import reportsRoutes from '../modules/reports/reports.routes';
+import settingsRoutes from '../modules/settings/settings.routes';
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use('/transactions', transactionsRoutes);
 router.use('/queues', queuesRoutes);
 router.use('/stock', stockRoutes);
 router.use('/reports', reportsRoutes);
+router.use('/settings', settingsRoutes);
 
 export default router;

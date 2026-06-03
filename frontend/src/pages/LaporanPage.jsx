@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
-import { BarChart2, TrendingUp, DollarSign, ShoppingBag, Award, Calendar } from 'lucide-react';
+import { BarChart2, TrendingUp, DollarSign, ShoppingBag, Award, Calendar, FileDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Skeleton } from '../components/ui/skeleton';
 import { formatCurrency, formatDateTime, getImageUrl } from '../lib/utils';
+import useSettingsStore from '../store/settingsStore';
+import ReportPrintArea from '../components/ReportPrintArea';
 import api from '../api';
 
 function DateFilter({ startDate, endDate, onChange }) {
@@ -45,9 +47,46 @@ export default function LaporanPage() {
   const [topProducts, setTopProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const { settings, fetchSettings } = useSettingsStore();
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
+
   const handleDateChange = (key, val) => {
     if (key === 'startDate') setStartDate(val);
     else setEndDate(val);
+  };
+
+  const handleExportPDF = () => {
+    const styleEl = document.createElement('style');
+    styleEl.innerHTML = `
+      @media print {
+        @page {
+          size: A4 portrait;
+          margin: 15mm;
+        }
+        body * {
+          visibility: hidden !important;
+        }
+        .report-print-area, .report-print-area * {
+          visibility: visible !important;
+        }
+        .report-print-area {
+          display: block !important;
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          margin: 0;
+          padding: 0;
+        }
+      }
+    `;
+    document.head.appendChild(styleEl);
+    setTimeout(() => {
+      window.print();
+      document.head.removeChild(styleEl);
+    }, 100);
   };
 
   const fetchAll = async () => {
@@ -75,7 +114,13 @@ export default function LaporanPage() {
           <h1 className="text-2xl font-bold">Laporan Penjualan</h1>
           <p className="text-muted-foreground text-sm">Analisis kinerja bisnis Z Coffee</p>
         </div>
-        <DateFilter startDate={startDate} endDate={endDate} onChange={handleDateChange} />
+        <div className="flex items-center gap-3">
+          <DateFilter startDate={startDate} endDate={endDate} onChange={handleDateChange} />
+          <Button onClick={handleExportPDF} variant="outline" className="h-9 gap-1.5 shadow-sm border-border/80 hover:bg-muted font-medium shrink-0">
+            <FileDown className="h-4 w-4 text-coffee-600" />
+            Ekspor PDF
+          </Button>
+        </div>
       </div>
 
       {/* Summary cards */}
@@ -186,6 +231,12 @@ export default function LaporanPage() {
           </CardContent>
         </Card>
       </div>
+      <ReportPrintArea
+        salesData={salesData}
+        startDate={startDate}
+        endDate={endDate}
+        settings={settings}
+      />
     </div>
   );
 }

@@ -58,6 +58,22 @@ async function main() {
     await prisma.product.create({ data: { ...product, isAvailable: true } });
   }
 
+  // Settings
+  const settings = [
+    { key: 'shop_name', value: 'Z Coffee' },
+    { key: 'shop_address', value: 'Jl. Contoh Alamat Toko No. 123, Jakarta' },
+    { key: 'shop_phone', value: '0812-3456-7890' },
+    { key: 'receipt_footer', value: 'Terima kasih atas kunjungan Anda!' },
+  ];
+
+  for (const s of settings) {
+    await prisma.setting.upsert({
+      where: { key: s.key },
+      update: {},
+      create: s,
+    });
+  }
+
   console.log('✅ Seeding complete!');
   console.log('');
   console.log('👤 Accounts:');

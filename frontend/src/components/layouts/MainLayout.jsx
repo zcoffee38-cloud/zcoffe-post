@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Package, ShoppingCart, Users, ClipboardList,
-  BarChart2, LogOut, Menu, X, Coffee, Moon, Sun, Layers
+  BarChart2, LogOut, Menu, X, Coffee, Moon, Sun, Layers, Settings, History
 } from 'lucide-react';
 import useAuthStore from '@/store/authStore';
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,9 @@ const navItems = [
   { path: '/produk', label: 'Produk', icon: Package, roles: ['admin'] },
   { path: '/stok', label: 'Stok', icon: Layers, roles: ['admin'] },
   { path: '/laporan', label: 'Laporan', icon: BarChart2, roles: ['admin', 'owner'] },
+  { path: '/riwayat', label: 'Riwayat Pesanan', icon: History, roles: ['admin', 'kasir', 'owner'] },
   { path: '/pengguna', label: 'Pengguna', icon: Users, roles: ['admin'] },
+  { path: '/pengaturan', label: 'Pengaturan', icon: Settings, roles: ['admin'] },
 ];
 
 const roleColors = { admin: 'text-coffee-600', kasir: 'text-blue-600', owner: 'text-purple-600' };

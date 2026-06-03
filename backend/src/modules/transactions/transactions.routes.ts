@@ -103,15 +103,22 @@ const createTransaction = asyncHandler(async (req: AuthRequest, res: Response) =
 });
 
 const getAll = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { page = '1', limit = '10', date } = req.query as Record<string, string>;
+  const { page = '1', limit = '10', date, search = '' } = req.query as Record<string, string>;
   const { skip, page: p, limit: l } = getPagination(page, limit);
 
-  const where: Record<string, unknown> = {};
+  const where: any = {};
   if (date) {
     const d = new Date(date);
     const nextDay = new Date(d);
     nextDay.setDate(nextDay.getDate() + 1);
     where.createdAt = { gte: d, lt: nextDay };
+  }
+
+  if (search) {
+    where.OR = [
+      { invoiceNumber: { contains: search, mode: 'insensitive' } },
+      { customerName: { contains: search, mode: 'insensitive' } },
+    ];
   }
 
   const [transactions, total] = await Promise.all([
