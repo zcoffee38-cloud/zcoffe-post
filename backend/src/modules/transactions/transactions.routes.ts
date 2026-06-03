@@ -15,9 +15,14 @@ export const setSocketIO = (socketIO: Server) => {
 
 const createTransaction = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { items, paymentMethod, cashAmount } = req.body;
+  const customerName = typeof req.body.customerName === 'string' ? req.body.customerName.trim() : null;
 
   if (!items || !Array.isArray(items) || items.length === 0) {
     return sendError(res, 'Items are required', 400);
+  }
+
+  if (!customerName) {
+    return sendError(res, 'Customer name is required', 400);
   }
 
   const result = await prisma.$transaction(async (tx) => {
@@ -51,6 +56,7 @@ const createTransaction = asyncHandler(async (req: AuthRequest, res: Response) =
     const transaction = await tx.transaction.create({
       data: {
         invoiceNumber,
+        customerName,
         total,
         totalProfit,
         paymentMethod,
@@ -82,6 +88,12 @@ const createTransaction = asyncHandler(async (req: AuthRequest, res: Response) =
       status: result.queue.status,
       transactionId: result.queue.transactionId,
       invoice: result.transaction.invoiceNumber,
+      customerName: result.transaction.customerName,
+      transaction: {
+        invoiceNumber: result.transaction.invoiceNumber,
+        customerName: result.transaction.customerName,
+        items: result.transaction.items.map(i => ({ qty: i.qty, product: { name: i.product.name } })),
+      },
       items: result.transaction.items.map(i => ({ name: i.product.name, qty: i.qty })),
       createdAt: result.queue.createdAt,
     });

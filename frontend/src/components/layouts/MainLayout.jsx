@@ -21,7 +21,9 @@ const navItems = [
 const roleColors = { admin: 'text-coffee-600', kasir: 'text-blue-600', owner: 'text-purple-600' };
 
 export function MainLayout({ children }) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => (
+    typeof window !== 'undefined' ? window.innerWidth >= 1024 : true
+  ));
   const [darkMode, setDarkMode] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -38,13 +40,27 @@ export function MainLayout({ children }) {
   };
 
   const allowedNavItems = navItems.filter(item => item.roles.includes(user?.role));
+  const closeMobileSidebar = () => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setSidebarOpen(false);
+    }
+  };
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
+      {sidebarOpen && (
+        <button
+          type="button"
+          aria-label="Tutup menu"
+          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+          onClick={closeMobileSidebar}
+        />
+      )}
+
       {/* Sidebar */}
       <aside className={cn(
-        'flex flex-col bg-card border-r border-border transition-all duration-300 shrink-0',
-        sidebarOpen ? 'w-64' : 'w-16'
+        'fixed inset-y-0 left-0 z-40 flex flex-col bg-card border-r border-border transition-all duration-300 shrink-0 lg:static',
+        sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-64 lg:translate-x-0 lg:w-16'
       )}>
         {/* Logo */}
         <div className="flex items-center gap-3 p-4 border-b border-border">
@@ -75,6 +91,7 @@ export function MainLayout({ children }) {
                   !sidebarOpen && 'justify-center'
                 )}
                 title={!sidebarOpen ? item.label : undefined}
+                onClick={closeMobileSidebar}
               >
                 <item.icon className="h-5 w-5 shrink-0" />
                 {sidebarOpen && <span>{item.label}</span>}
@@ -129,13 +146,13 @@ export function MainLayout({ children }) {
             {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
           <div className="flex-1" />
-          <span className="text-sm text-muted-foreground font-mono">
+          <span className="hidden sm:inline text-sm text-muted-foreground font-mono">
             {new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </span>
         </header>
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6">
           {children}
         </main>
       </div>

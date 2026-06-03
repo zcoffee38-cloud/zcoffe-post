@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Search, Plus, Minus, Trash2, ShoppingCart, CreditCard, Banknote, Loader2, X, QrCode, CheckCircle } from 'lucide-react';
+import { Search, Plus, Minus, Trash2, ShoppingCart, CreditCard, Banknote, Loader2, X, QrCode, CheckCircle, Printer } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
@@ -35,9 +35,9 @@ function ProductCard({ product, onAdd }) {
           : <div className="w-full h-full flex items-center justify-center text-4xl">☕</div>
         }
       </div>
-      <div className="p-3">
-        <p className="font-semibold text-sm leading-tight line-clamp-2 mb-1">{product.name}</p>
-        <p className="text-coffee-600 dark:text-coffee-400 font-bold text-sm">{formatCurrency(product.price)}</p>
+      <div className="p-2.5 sm:p-3">
+        <p className="font-semibold text-xs sm:text-sm leading-tight line-clamp-2 mb-1">{product.name}</p>
+        <p className="text-coffee-600 dark:text-coffee-400 font-bold text-xs sm:text-sm">{formatCurrency(product.price)}</p>
         <div className="flex items-center justify-between mt-1.5">
           <span className="text-xs text-muted-foreground">Stok: {product.stock}</span>
           {(!product.isAvailable || product.stock === 0) && (
@@ -55,6 +55,7 @@ function ProductCard({ product, onAdd }) {
 }
 
 function PaymentModal({ total, onClose, onSuccess }) {
+  const [customerName, setCustomerName] = useState('');
   const [method, setMethod] = useState('cash');
   const [cashInput, setCashInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -66,6 +67,11 @@ function PaymentModal({ total, onClose, onSuccess }) {
   const change = cashAmount - total;
 
   const handlePay = async () => {
+    if (!customerName.trim()) {
+      toast({ title: 'Nama pemesan wajib diisi', variant: 'destructive' });
+      return;
+    }
+
     if (method === 'cash' && cashAmount < total) {
       toast({ title: 'Uang kurang', description: 'Jumlah tunai tidak mencukupi', variant: 'destructive' });
       return;
@@ -74,6 +80,7 @@ function PaymentModal({ total, onClose, onSuccess }) {
     try {
       const payload = {
         items: items.map(i => ({ productId: i.id, qty: i.qty })),
+        customerName: customerName.trim(),
         paymentMethod: method,
         ...(method === 'cash' && { cashAmount }),
       };
@@ -89,16 +96,27 @@ function PaymentModal({ total, onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
-      <div className="bg-card rounded-2xl border w-full max-w-md p-6 animate-fade-in">
-        <div className="flex items-center justify-between mb-6">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-3 sm:p-4">
+      <div className="bg-card rounded-2xl border w-full max-w-md max-h-[92dvh] overflow-y-auto p-4 sm:p-6 animate-fade-in">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
           <h2 className="text-lg font-bold">Pembayaran</h2>
           <button onClick={onClose} className="p-1 rounded-lg text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
         </div>
 
         <div className="p-4 rounded-xl bg-muted mb-5 text-center">
           <p className="text-sm text-muted-foreground mb-1">Total Pembayaran</p>
-          <p className="text-3xl font-bold text-coffee-700 dark:text-coffee-400">{formatCurrency(total)}</p>
+          <p className="text-2xl sm:text-3xl font-bold text-coffee-700 dark:text-coffee-400">{formatCurrency(total)}</p>
+        </div>
+
+        <div className="mb-4 space-y-2">
+          <label className="text-sm font-medium">Nama Pemesan</label>
+          <Input
+            placeholder="Masukkan nama pemesan"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+            maxLength={80}
+            autoFocus
+          />
         </div>
 
         <div className="mb-4">
@@ -156,7 +174,54 @@ function PaymentModal({ total, onClose, onSuccess }) {
   );
 }
 
-function SuccessModal({ result, onClose }) {
+function ReceiptPrintArea({ result }) {
+  if (!result) return null;
+
+  const { transaction, queue } = result;
+  const paymentLabels = { cash: 'Tunai', qris: 'QRIS', transfer: 'Transfer' };
+
+  return (
+    <div className="receipt-print-area" aria-hidden="true">
+      <div className="receipt">
+        <div className="receipt-header">
+          <h1>Z Coffee</h1>
+          <p>Point of Sale</p>
+        </div>
+        <div className="receipt-meta">
+          <div><span>Invoice</span><strong>{transaction.invoiceNumber}</strong></div>
+          <div><span>Antrian</span><strong>#{queue.queueNumber}</strong></div>
+          <div><span>Pemesan</span><strong>{transaction.customerName}</strong></div>
+          <div><span>Waktu</span><strong>{new Date(transaction.createdAt).toLocaleString('id-ID')}</strong></div>
+          <div><span>Kasir</span><strong>{transaction.createdBy?.name || '-'}</strong></div>
+        </div>
+        <div className="receipt-items">
+          {transaction.items.map((item) => (
+            <div className="receipt-item" key={item.id}>
+              <div>
+                <strong>{item.product?.name}</strong>
+                <span>{item.qty} x {formatCurrency(item.price)}</span>
+              </div>
+              <strong>{formatCurrency(item.subtotal)}</strong>
+            </div>
+          ))}
+        </div>
+        <div className="receipt-totals">
+          <div><span>Total</span><strong>{formatCurrency(transaction.total)}</strong></div>
+          <div><span>Metode</span><strong>{paymentLabels[transaction.paymentMethod]}</strong></div>
+          {transaction.paymentMethod === 'cash' && (
+            <>
+              <div><span>Tunai</span><strong>{formatCurrency(transaction.cashAmount || 0)}</strong></div>
+              <div><span>Kembali</span><strong>{formatCurrency(transaction.changeAmount || 0)}</strong></div>
+            </>
+          )}
+        </div>
+        <p className="receipt-footer">Terima kasih</p>
+      </div>
+    </div>
+  );
+}
+
+function SuccessModal({ result, onClose, onPrint }) {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-card rounded-2xl border w-full max-w-sm p-8 text-center animate-fade-in">
@@ -167,7 +232,14 @@ function SuccessModal({ result, onClose }) {
           <p className="text-coffee-300 text-sm mb-1">No. Antrian</p>
           <p className="text-6xl font-bold font-mono">{result.queue.queueNumber}</p>
         </div>
-        <Button className="w-full" onClick={onClose}>Transaksi Baru</Button>
+        <p className="text-sm text-muted-foreground mb-4">Pemesan: {result.transaction.customerName}</p>
+        <div className="flex gap-2">
+          <Button variant="outline" className="flex-1" onClick={onPrint}>
+            <Printer className="h-4 w-4" />
+            Cetak Ulang
+          </Button>
+          <Button className="flex-1" onClick={onClose}>Transaksi Baru</Button>
+        </div>
       </div>
     </div>
   );
@@ -188,6 +260,10 @@ export default function KasirPage() {
   const updateQty = useCartStore(s => s.updateQty);
   const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
 
+  const printReceipt = useCallback(() => {
+    setTimeout(() => window.print(), 50);
+  }, []);
+
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
@@ -207,10 +283,14 @@ export default function KasirPage() {
     return () => clearTimeout(t);
   }, [fetchProducts]);
 
+  useEffect(() => {
+    if (successResult) printReceipt();
+  }, [successResult, printReceipt]);
+
   return (
-    <div className="flex h-[calc(100vh-8rem)] gap-4 animate-fade-in">
+    <div className="flex min-h-[calc(100dvh-5.5rem)] flex-col gap-3 pb-3 lg:h-[calc(100vh-8rem)] lg:flex-row lg:gap-4 lg:pb-0 animate-fade-in">
       {/* Products panel */}
-      <div className="flex-1 flex flex-col min-w-0 gap-4">
+      <div className="flex min-h-[52dvh] flex-1 flex-col min-w-0 gap-3 lg:gap-4">
         {/* Search + filter */}
         <div className="flex gap-2 items-center">
           <div className="relative flex-1">
@@ -218,7 +298,7 @@ export default function KasirPage() {
             <Input placeholder="Cari produk..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
           </div>
         </div>
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin -mx-3 px-3 sm:mx-0 sm:px-0">
           <button
             onClick={() => setActiveCategory('')}
             className={cn('px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all border', !activeCategory ? 'bg-coffee-700 text-cream-50 border-coffee-700' : 'border-border hover:bg-muted')}
@@ -233,9 +313,9 @@ export default function KasirPage() {
         </div>
 
         {/* Grid */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-visible lg:overflow-y-auto">
           {loading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
               {Array(8).fill(0).map((_, i) => (
                 <Card key={i}><CardContent className="p-0">
                   <Skeleton className="aspect-square rounded-none rounded-t-2xl" />
@@ -244,7 +324,7 @@ export default function KasirPage() {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
               {products.map(p => <ProductCard key={p.id} product={p} onAdd={addItem} />)}
             </div>
           )}
@@ -252,17 +332,17 @@ export default function KasirPage() {
       </div>
 
       {/* Cart */}
-      <div className="w-80 shrink-0 flex flex-col bg-card rounded-2xl border overflow-hidden">
-        <div className="p-4 border-b flex items-center gap-2">
+      <div className="sticky bottom-0 z-20 max-h-[46dvh] w-full shrink-0 flex flex-col bg-card rounded-2xl border overflow-hidden shadow-xl lg:static lg:h-full lg:max-h-none lg:w-80 lg:shadow-none">
+        <div className="p-3 sm:p-4 border-b flex items-center gap-2">
           <ShoppingCart className="h-5 w-5 text-coffee-600" />
           <h2 className="font-bold">Keranjang</h2>
           {items.length > 0 && <Badge className="ml-auto">{items.reduce((s, i) => s + i.qty, 0)} item</Badge>}
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        <div className="min-h-0 flex-1 overflow-y-auto p-2.5 sm:p-3 space-y-2">
           {items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-8">
-              <ShoppingCart className="h-10 w-10 mb-3 opacity-20" />
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-5 sm:py-8">
+              <ShoppingCart className="h-8 w-8 sm:h-10 sm:w-10 mb-2 sm:mb-3 opacity-20" />
               <p className="text-sm">Keranjang kosong</p>
               <p className="text-xs">Pilih produk untuk ditambahkan</p>
             </div>
@@ -289,7 +369,7 @@ export default function KasirPage() {
         </div>
 
         {items.length > 0 && (
-          <div className="p-4 border-t space-y-3">
+          <div className="p-3 sm:p-4 border-t space-y-3">
             <div className="flex justify-between font-bold">
               <span>Total</span>
               <span className="text-coffee-700 dark:text-coffee-400">{formatCurrency(total)}</span>
@@ -310,7 +390,10 @@ export default function KasirPage() {
         />
       )}
       {successResult && (
-        <SuccessModal result={successResult} onClose={() => setSuccessResult(null)} />
+        <>
+          <ReceiptPrintArea result={successResult} />
+          <SuccessModal result={successResult} onClose={() => setSuccessResult(null)} onPrint={printReceipt} />
+        </>
       )}
     </div>
   );

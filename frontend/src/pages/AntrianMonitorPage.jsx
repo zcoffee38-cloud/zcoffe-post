@@ -70,6 +70,9 @@ export default function AntrianMonitorPage() {
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-blue-400 text-xs font-semibold uppercase tracking-wider">● Diproses</span>
                   </div>
+                  {q.transaction?.customerName && (
+                    <p className="text-cream-100 text-sm font-semibold mb-1">{q.transaction.customerName}</p>
+                  )}
                   {q.transaction?.items?.map((item, i) => (
                     <p key={i} className="text-coffee-200 text-sm">{item.qty}x {item.product?.name}</p>
                   ))}
@@ -104,6 +107,9 @@ export default function AntrianMonitorPage() {
                   <span className={cn('font-bold font-mono leading-none', idx === 0 ? 'text-5xl text-amber-300' : 'text-4xl text-coffee-300')}>
                     {q.queueNumber}
                   </span>
+                  {q.transaction?.customerName && (
+                    <span className="text-xs text-coffee-300 max-w-full truncate">{q.transaction.customerName}</span>
+                  )}
                 </div>
               ))}
             </div>

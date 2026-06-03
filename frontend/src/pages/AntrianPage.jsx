@@ -29,6 +29,9 @@ function QueueCard({ queue, onUpdateStatus }) {
             <Badge variant={cfg.color}>{cfg.label}</Badge>
             <span className="text-xs text-muted-foreground">{formatDateTime(queue.createdAt)}</span>
           </div>
+          {queue.transaction?.customerName && (
+            <p className="text-sm font-semibold mb-1">{queue.transaction.customerName}</p>
+          )}
           <div className="space-y-0.5">
             {queue.transaction?.items?.map((item, idx) => (
               <p key={idx} className="text-sm">

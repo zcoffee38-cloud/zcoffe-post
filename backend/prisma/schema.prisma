@@ -74,6 +74,7 @@ model Product {
 model Transaction {
   id              String            @id @default(cuid())
   invoiceNumber   String            @unique @map("invoice_number")
+  customerName    String?           @map("customer_name")
   total           Int
   totalProfit     Int               @map("total_profit")
   paymentMethod   PaymentMethod     @map("payment_method")
