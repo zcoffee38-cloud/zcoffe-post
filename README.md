@@ -76,9 +76,19 @@ npm install
 cp .env.example .env
 ```
 
-Edit `.env`:
+Edit `.env` (Pilih salah satu tipe database yang Anda gunakan):
+*   **Jika menggunakan PostgreSQL:**
+    ```env
+    DATABASE_URL="postgresql://postgres:password@localhost:5432/zcoffee_db"
+    ```
+*   **Jika menggunakan MySQL:**
+    ```env
+    DATABASE_URL="mysql://root:password@localhost:3306/zcoffee_db"
+    ```
+
+Sistem akan secara otomatis mendeteksi tipe database Anda dari protokol `DATABASE_URL` di atas dan menyesuaikan konfigurasi ORM.
+
 ```env
-DATABASE_URL="postgresql://postgres:password@localhost:5432/zcoffee_db"
 JWT_SECRET="ganti-dengan-secret-yang-kuat"
 JWT_EXPIRES_IN="7d"
 PORT=5000
@@ -86,11 +96,15 @@ FRONTEND_URL="http://localhost:5172"
 ```
 
 ```bash
-# Generate Prisma client
+# Generate Prisma client & Setup Database Provider
 npm run prisma:generate
 
-# Jalankan migrasi database
+# Jalankan sinkronisasi database:
+# Pilihan A: Jika menggunakan PostgreSQL (menjalankan migrasi bawaan)
 npm run prisma:migrate
+
+# Pilihan B: Jika menggunakan MySQL (sinkronisasi skema langsung)
+npm run prisma:push
 
 # Seed data awal (users + produk contoh)
 npm run prisma:seed

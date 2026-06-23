@@ -1,0 +1,86 @@
+-- Z Coffee POS MySQL Database Schema
+
+CREATE TABLE IF NOT EXISTS `users` (
+  `id` VARCHAR(30) PRIMARY KEY,
+  `name` VARCHAR(255) NOT NULL,
+  `email` VARCHAR(255) UNIQUE NOT NULL,
+  `password` VARCHAR(255) NOT NULL,
+  `role` ENUM('admin', 'kasir', 'owner') NOT NULL DEFAULT 'kasir',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `categories` (
+  `id` VARCHAR(30) PRIMARY KEY,
+  `name` VARCHAR(255) UNIQUE NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `products` (
+  `id` VARCHAR(30) PRIMARY KEY,
+  `category_id` VARCHAR(30) NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `image` VARCHAR(255) NULL,
+  `price` INT NOT NULL,
+  `hpp` INT NOT NULL,
+  `stock` INT NOT NULL DEFAULT 0,
+  `is_available` BOOLEAN NOT NULL DEFAULT TRUE,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `transactions` (
+  `id` VARCHAR(30) PRIMARY KEY,
+  `invoice_number` VARCHAR(255) UNIQUE NOT NULL,
+  `customer_name` VARCHAR(255) NULL,
+  `total` INT NOT NULL,
+  `total_profit` INT NOT NULL,
+  `payment_method` ENUM('cash', 'qris', 'transfer') NOT NULL,
+  `cash_amount` INT NULL,
+  `change_amount` INT NULL,
+  `created_by` VARCHAR(30) NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `is_deleted` BOOLEAN NOT NULL DEFAULT FALSE,
+  FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `transaction_items` (
+  `id` VARCHAR(30) PRIMARY KEY,
+  `transaction_id` VARCHAR(30) NOT NULL,
+  `product_id` VARCHAR(30) NOT NULL,
+  `qty` INT NOT NULL,
+  `price` INT NOT NULL,
+  `hpp` INT NOT NULL,
+  `subtotal` INT NOT NULL,
+  FOREIGN KEY (`transaction_id`) REFERENCES `transactions` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `queues` (
+  `id` VARCHAR(30) PRIMARY KEY,
+  `queue_number` INT NOT NULL,
+  `status` ENUM('waiting', 'processing', 'done') NOT NULL DEFAULT 'waiting',
+  `transaction_id` VARCHAR(30) UNIQUE NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (`transaction_id`) REFERENCES `transactions` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `stock_logs` (
+  `id` VARCHAR(30) PRIMARY KEY,
+  `product_id` VARCHAR(30) NOT NULL,
+  `type` ENUM('in', 'out', 'adjustment') NOT NULL,
+  `qty` INT NOT NULL,
+  `note` VARCHAR(255) NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `settings` (
+  `id` VARCHAR(30) PRIMARY KEY,
+  `key` VARCHAR(255) UNIQUE NOT NULL,
+  `value` TEXT NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -5,12 +5,18 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "predev": "ts-node prisma/setup.ts",
     "build": "tsc",
+    "prebuild": "ts-node prisma/setup.ts",
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate",
+    "preprisma:generate": "ts-node prisma/setup.ts",
     "prisma:migrate": "prisma migrate dev",
+    "preprisma:migrate": "ts-node prisma/setup.ts",
     "prisma:push": "prisma db push",
+    "preprisma:push": "ts-node prisma/setup.ts",
     "prisma:seed": "ts-node prisma/seed.ts",
+    "preprisma:seed": "ts-node prisma/setup.ts",
     "prisma:studio": "prisma studio",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write src"
