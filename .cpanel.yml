@@ -1,0 +1,14 @@
+---
+deployment:
+  tasks:
+    # 1. Tentukan path tujuan deploy (biasanya folder public_html)
+    - export DEPLOYPATH=~/public_html
+    
+    # 2. Buat folder api jika belum ada
+    - /bin/mkdir -p $DEPLOYPATH/api
+    
+    # 3. Salin hasil build frontend (isi folder frontend/dist) ke public_html
+    - /bin/rsync -av --delete frontend/dist/ $DEPLOYPATH
+    
+    # 4. Salin file backend PHP ke folder public_html/api
+    - /bin/rsync -av backend-php/ $DEPLOYPATH/api/
