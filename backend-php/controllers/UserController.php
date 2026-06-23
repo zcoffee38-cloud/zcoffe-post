@@ -18,11 +18,11 @@ class UserController {
         if (!empty($search)) {
             $countStmt = $db->prepare("SELECT COUNT(*) FROM users WHERE name LIKE ? OR email LIKE ?");
             $countStmt->execute(["%$search%", "%$search%"]);
-            $queryStr = "SELECT id, name, email, role, created_at, updated_at FROM users WHERE name LIKE :search OR email LIKE :search ORDER BY name ASC LIMIT :limit OFFSET :offset";
+            $queryStr = "SELECT id, name, email, role, created_at AS createdAt, updated_at AS updatedAt FROM users WHERE name LIKE :search OR email LIKE :search ORDER BY name ASC LIMIT :limit OFFSET :offset";
         } else {
             $countStmt = $db->prepare("SELECT COUNT(*) FROM users");
             $countStmt->execute();
-            $queryStr = "SELECT id, name, email, role, created_at, updated_at FROM users ORDER BY name ASC LIMIT :limit OFFSET :offset";
+            $queryStr = "SELECT id, name, email, role, created_at AS createdAt, updated_at AS updatedAt FROM users ORDER BY name ASC LIMIT :limit OFFSET :offset";
         }
         $total = intval($countStmt->fetchColumn());
         
@@ -76,7 +76,7 @@ class UserController {
         $stmt->execute([$id, $name, $email, $hashedPassword, $role]);
 
         // Get created user
-        $userStmt = $db->prepare("SELECT id, name, email, role, created_at, updated_at FROM users WHERE id = ?");
+        $userStmt = $db->prepare("SELECT id, name, email, role, created_at AS createdAt, updated_at AS updatedAt FROM users WHERE id = ?");
         $userStmt->execute([$id]);
         $user = $userStmt->fetch();
 
@@ -126,7 +126,7 @@ class UserController {
         }
 
         // Get updated user
-        $userStmt = $db->prepare("SELECT id, name, email, role, created_at, updated_at FROM users WHERE id = ?");
+        $userStmt = $db->prepare("SELECT id, name, email, role, created_at AS createdAt, updated_at AS updatedAt FROM users WHERE id = ?");
         $userStmt->execute([$id]);
         $user = $userStmt->fetch();
 

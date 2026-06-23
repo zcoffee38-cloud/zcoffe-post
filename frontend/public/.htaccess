@@ -1,0 +1,15 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteRule ^index\.html$ - [L]
+  
+  # Jika request mencari file asli atau folder asli, biarkan Apache menyajikannya
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  
+  # KECUALIKAN folder API agar routing backend PHP tetap berjalan
+  RewriteCond %{REQUEST_URI} !^/api/
+  
+  # Arahkan rute lainnya ke index.html untuk ditangani React Router
+  RewriteRule . /index.html [L]
+</IfModule>
