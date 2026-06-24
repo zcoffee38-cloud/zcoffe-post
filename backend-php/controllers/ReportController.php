@@ -196,15 +196,15 @@ class ReportController {
             FROM transaction_items ti 
             INNER JOIN transactions t ON ti.transaction_id = t.id 
             INNER JOIN products p ON ti.product_id = p.id 
-            WHERE t.created_at >= ? AND t.created_at <= ? AND t.is_deleted = 0 
+            WHERE t.created_at >= :start AND t.created_at <= :end AND t.is_deleted = 0 
             GROUP BY ti.product_id, p.name, p.image, p.price 
             ORDER BY total_qty DESC 
             LIMIT :limit
         ";
 
         $stmt = $db->prepare($query);
-        $stmt->bindValue(1, $start, PDO::PARAM_STR);
-        $stmt->bindValue(2, $end, PDO::PARAM_STR);
+        $stmt->bindValue(':start', $start, PDO::PARAM_STR);
+        $stmt->bindValue(':end', $end, PDO::PARAM_STR);
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
         $rows = $stmt->fetchAll();
