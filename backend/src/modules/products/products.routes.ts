@@ -74,6 +74,7 @@ router.use(authenticate);
 router.get('/', getAll);
 router.get('/:id', getById);
 router.post('/', authorize('admin'), upload.single('image'), create);
+router.post('/:id', authorize('admin'), upload.single('image'), update);
 router.put('/:id', authorize('admin'), upload.single('image'), update);
 router.delete('/:id', authorize('admin'), remove);
 
