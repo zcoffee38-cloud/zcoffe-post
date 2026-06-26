@@ -172,6 +172,7 @@ class ProductController {
             if (!move_uploaded_file($fileTmpPath, $destPath)) {
                 sendError('Failed to save uploaded image', 500);
             }
+            chmod($destPath, 0644);
         }
 
         $id = generateCuid();
@@ -272,7 +273,15 @@ class ProductController {
             $newImageName = generateCuid() . '.' . $fileExtension;
             $destPath = UPLOAD_PATH . '/' . $newImageName;
             
-            if (move_uploaded_file($fileTmpPath, $destPath)) {
+            $moved = false;
+            if (is_uploaded_file($fileTmpPath)) {
+                $moved = move_uploaded_file($fileTmpPath, $destPath);
+            } else {
+                $moved = rename($fileTmpPath, $destPath) || (copy($fileTmpPath, $destPath) && unlink($fileTmpPath));
+            }
+            
+            if ($moved) {
+                chmod($destPath, 0644);
                 // Delete old image if it exists
                 if (!empty($product['image'])) {
                     $oldPath = UPLOAD_PATH . '/' . $product['image'];
