@@ -6,7 +6,7 @@ import { Badge } from '../components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Skeleton } from '../components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { SearchableSelect } from '../components/ui/searchable-select';
 import { formatDateTime, cn } from '../lib/utils';
 import { useToast } from '../components/ui/toaster';
 import api from '../api';
@@ -44,16 +44,20 @@ function AdjustModal({ products, onClose, onSave }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-1.5">
         <label className="text-sm font-medium">Produk</label>
-        <Select value={productId} onValueChange={setProductId}>
-          <SelectTrigger><SelectValue placeholder="Pilih produk" /></SelectTrigger>
-          <SelectContent>
-            {products.map(p => (
-              <SelectItem key={p.id} value={p.id}>
+        <SearchableSelect
+          value={productId}
+          onValueChange={setProductId}
+          placeholder="Pilih produk"
+          items={products.map(p => ({
+            value: p.id,
+            label: p.name,
+            labelNode: (
+              <>
                 {p.name} <span className="text-muted-foreground">(Stok: {p.stock})</span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+              </>
+            )
+          }))}
+        />
         {selectedProduct && (
           <p className="text-xs text-muted-foreground">Stok saat ini: <span className="font-semibold text-foreground">{selectedProduct.stock}</span></p>
         )}
